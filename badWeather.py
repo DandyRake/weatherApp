@@ -24,62 +24,62 @@ def get_location(city_name):
             city_result = location_data[0]["name"]
             state_result = location_data[0].get("state", None)
             country_result = location_data[0]["country"]
-            return city_result, state_result, country_result
+            lat = location_data[0]["lat"]
+            lon = location_data[0]["lon"]
+            return city_result, state_result, country_result, lat, lon
         else:
             print("No location data found for the given city name.")
-            return None, None, None
+            return None, None, None, None, None
     else:
         print(f"Error fetching location data: {response.status_code}")
-        return None, None, None
+        return None, None, None, None, None
 
 
 # Function to fetch weather data
 def get_weather(city_name, state_code=None, country_code=None):
-    # Construct the query parameter
-    query = city_name
-    if state_code:
-        query += f",{state_code}"
-    if country_code:
-        query += f",{country_code}"
+    city, state, country, lat, lon = get_location(city_name)
+    if city and lat and lon:
+        # Use lat/lon for a more precise query
+        request_url = f"{BASE_URL}?lat={lat}&lon={lon}&appid={API_KEY}&units={UNITS}"
+        response = requests.get(request_url)
+        if response.status_code == 200:
+            data = response.json()
+            weather = data["weather"][0]["description"]
+            temperature = data["main"]["temp"]
+            humidity = data["main"]["humidity"]
+            wind_speed = data["wind"]["speed"]
 
-    # Build the request URL
-    request_url = f"{BASE_URL}?q={city_name}&appid={API_KEY}&units={UNITS}"
-    response = requests.get(request_url)
-
-    if response.status_code == 200:
-        data = response.json()
-        weather = data["weather"][0]["description"]
-        temperature = data["main"]["temp"]
-        humidity = data["main"]["humidity"]
-        wind_speed = data["wind"]["speed"]
-
-        print(f"Weather in {city_name}: ")
-        print(f"Description: {weather}")
-        print(f"Temperature: {temperature}°F")
-        print(f"Humidity: {humidity}%")
-        print(f"Wind Speed: {wind_speed} mph")
+            print(f"Weather in {city_name}: ")
+            print(f"Description: {weather}")
+            print(f"Temperature: {temperature}°F")
+            print(f"Humidity: {humidity}%")
+            print(f"Wind Speed: {wind_speed} mph")
+        else:
+            print(
+                f"Error fetching weather data for {city_name}: {response.status_code}"
+            )
     else:
-        print(
-            f"\nError fetching weather data for {city_name}. "
-            f"Please ensure the city, state, or country codes are correct."
-        )
+        print("Unable to fetch location details.")
 
 
 # Main program
 if __name__ == "__main__":
+    print("Welcome to another Alternative Weather App!")
+    print("This app fetches current weather details for the city you enter.")
+    print("You can type 'quit' anytime to exit. \n")
+
     while True:
-        print("\nEnter city details (or type 'quit' to exit):")
+        print(
+            "\nEnter city details to fetch current weather data "
+            "(or type 'quit' to exit):"
+        )
         city = input("City name: ").strip()
         if city.lower() == "quit":
-            print("Goodbye!")
+            print("Goodbye!  Stay safe and check the weather often.")
             break
-
-        state = input("State code (optional, e.g., 'CA' for California): ").strip()
-        country = input(
-            "Country code (optional, e.g., 'US' for United States): "
-        ).strip()
-
-        if city:
-            get_weather(city, state, country)
+        elif city:
+            print("\nFetching weather details for your city...\n")
+            get_weather(city)
+            print("-" * 50)  # Separator line for better readability
         else:
             print("Please enter a valid city name.")
