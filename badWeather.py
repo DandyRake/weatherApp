@@ -11,6 +11,28 @@ BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 UNITS = "imperial"  # Use "metric" for Celsius
 
 
+# Function to fetch location details using a city name
+def get_location(city_name):
+    location_api_url = (
+        f"https://api.openweathermap.org/"
+        f"geo/1.0/direct?q={city_name}&limit=1&appid={API_KEY}"
+    )
+    response = requests.get(location_api_url)
+    if response.status_code == 200:
+        location_data = response.json()
+        if location_data:
+            city_result = location_data[0]["name"]
+            state_result = location_data[0].get("state", None)
+            country_result = location_data[0]["country"]
+            return city_result, state_result, country_result
+        else:
+            print("No location data found for the given city name.")
+            return None, None, None
+    else:
+        print(f"Error fetching location data: {response.status_code}")
+        return None, None, None
+
+
 # Function to fetch weather data
 def get_weather(city_name, state_code=None, country_code=None):
     # Construct the query parameter
